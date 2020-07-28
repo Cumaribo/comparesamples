@@ -1,4 +1,10 @@
-# This code takes three polygonspatial dataframes, samples, polyJRE
+# # This code takes three polygonspatial dataframes, samples, poly1 and Poly 2
+# it selects the polygons of poly1 and poly2 inside each of the sampling windows,
+# rasterizes them as "change, no-change" binary masks, compares them and calculates the 
+# contingency matrices for each window. It offers the option to plot the agreement maps and
+# export them as Geotiffs
+# the script returns a list with all the contingency tables
+
 library(rgdal)
 library(sf)
 library(rgeos)
