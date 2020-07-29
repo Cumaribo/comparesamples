@@ -75,7 +75,8 @@ if(writeraster==TRUE){
 }
   else
   {comparedata <- CompareClassification(test1.r, test2.r, names = list('JRE'=c('change','no-change'),'MVS'=c('change','no-change')), samplefrac = 1)
-  plot(comparedata)
+  if(plotAgMap==TRUE){
+  plot(comparedata)}
   if(writeraster==TRUE){
     writeRaster(comparedata$raster, paste(samplesID, "agreement",sep='_'), format='GTiff', overwrite=TRUE)
   }}
