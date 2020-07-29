@@ -82,7 +82,7 @@ if(writeraster==TRUE){
 res<- as.data.frame(comparedata$table)
 
   names(res) <- samplesID
-  rm(test1, test1.r, test2, test2.r,window1)
+  colnames(res) <- c('change', 'no-change', 'Sum','UserAccuracy') 
   return(res)
   #return(comparedata)
 }
