@@ -31,7 +31,7 @@ template <- raster('template.tif')
 
 # here, i generated a vector with the unique values of the id's of the windows
 
-samplesID <- unique(poly1$sr_band2_1)
+samplesID <- samples$sr_band2_1
 
 ###############################################################
 
