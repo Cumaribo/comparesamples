@@ -1,7 +1,7 @@
 #Sample Evaluation
 #Jerónimo Rodriguez, August 2020  
 
-# This code takes three polygonspatial dataframes, samples, poly1 and Poly 2
+# This code is takes three polygonspatial dataframes, samples, poly1 and Poly 2
 # it selects the polygons of poly1 and poly2 inside each of the sampling windows,
 # rasterizes them as "change, no-change" binary masks, compares them and calculates the 
 # contingency matrices for each window. It offers the option to plot the agreement maps and
@@ -48,10 +48,9 @@ CCACHsq <- raster("LC08_L1TP_005057_20140128_20170426_removeChgMsk12_CCAChsq.tif
 Gamma <- raster("LC08_L1TP_005057_20140128_20170426_removeChgMsk14_Gamma.tif")
 CC <- raster("LC08_L1TP_005057_20140128_20170426_removeChgMsk8_CCA.tif")
 
-samplesID[5]
 ###############################################################
 
-compare.r <- function(poly1, msk, template, samples, writeraster=FALSE, plotAgMap=TRUE){
+square_cont <- function(poly1, msk, template, samples, writeraster=FALSE, plotAgMap=TRUE){
   samplesID <- samples$sr_band2_1
   test1 <- poly1[poly1$sr_band2_1%in%samplesID,] 
   test2 <- poly2[poly2$sr_band2_1%in%samplesID,]
@@ -66,42 +65,35 @@ compare.r <- function(poly1, msk, template, samples, writeraster=FALSE, plotAgMa
   msk[is.na(msk[])] <- 0
   #return(list(test1.r, msk))}
   #test2.r <- rasterize(test2, template., test2$change_b)
-  crosstab <- crosstabm(test1.r,msk, percent=TRUE, population = NULL)
-  differences <- differenceMR(test1.r,msk, eval='original', percent=TRUE)
+  crosstab1 <- crosstabm(test1.r,msk, percent=TRUE, population = NULL)
+  #differences <- differenceMR(test1.r,msk, eval='original', percent=TRUE)
   #overallComponentsPlot(comp = test1.r, ref = msk, ctmatrix = NULL, units = NULL,population = NULL)
-  #return(crosstab)}
-  #return(differences)}
-  return(list(crosstab, differences))}
+  return(crosstab)}
   
 
-#MADscatterplot(test1.r, msk, strata = template.)
-  comparedata <- CompareClassification(test1.r, msk, names = list('Ref'=c('no-change','change'),'chg_msk'=c('no-change','change')), samplefrac = 1)
-  if(plotAgMap==TRUE){
-  plot(comparedata)}
-  return(comparedata)}
+#Extract Square Contingency matrices
+con_tables <- (x=1:nrow(samples))%>%map(function(x) square_cont(poly1,msk=CC, template, samples=samples[x,], writeraster=TRUE, plotAgMap =TRUE))
+#Caculate Difference Metrics
+tablej <- (x=1:nrow(samples))%>%map(function(x) diffTablej(con_tables[[x]][[1]], digits = 2, analysis = 'error'))
+#Caclculate Overall Differences (the inverse of the agreement) 
+overalldff <- (x=1:nrow(samples))%>%map(function(x) overallDiffCatj(results[[x]][[1]]))
 
 
-  if(writeraster==TRUE){
-    writeRaster(comparedata$raster, paste(samplesID, "agreement",sep='_'), format='GTiff', overwrite=TRUE)
-  }}
-res<- as.data.frame(comparedata$table)
-  #names(res) <- samplesID
-  colnames(res) <- c('no-change', 'change', 'Sum','UserAccuracy')
-  #names(res) <- samplesID
-  return(res)
-  #return(comparedata)
-}
+tablejj <- do.call(rbind, tablej)
 
-# Run the function
 
-results <- (x=1:1)%>%map(function(x) compare.r(poly1,msk=CC, template, samples=samples[x,], writeraster=TRUE, plotAgMap =TRUE))
+results[[1]]
 
-results <- (x=1:nrow(samples))%>%map(function(x) compare.r(poly1,msk=CC, template, samples=samples[x,], writeraster=TRUE, plotAgMap =TRUE))
-results2 <- (x=1:nrow(samples))%>%map(function(x) compare.r(poly1,msk=CC, template, samples=samples[x,], writeraster=TRUE, plotAgMap =TRUE))
+tablej[[1]]
+overalldff[[1]]
+results[[1]]
 
-compare <- (x=1:nrow(samples))%>%map(function(x) agreementj(results[[x]][[2]]))
+
+
 
 agreement <- (x=1:nrow(samples))%>%map(function(x) agreementj(results[[x]][[1]]))
+
+
 
 omissionm <-(x=1:nrow(samples))%>%map(function(x) omissionj(results[[x]][[1]]))
 comission.<-(x=1:nrow(samples))%>%map(function(x) comissionj(results[[x]][[1]]))
@@ -162,3 +154,5 @@ summary(resultCCSChsq$Overall)
 summary(resultsCC$Overall)
 names(results)
 names(results_rev)
+
+tablej[[1]]$Agreement[3]
