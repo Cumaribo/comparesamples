@@ -51,7 +51,7 @@ CC <- raster("LC08_L1TP_005057_20140128_20170426_removeChgMsk8_CCA.tif")
 
 ###############################################################
 
-square_cont <- function(poly1, poly2, alg1,alg2,alg3, msk, samples, writeraster=FALSE, plotAgMap=TRUE){
+square_cont <- function(poly1, poly2, alg1,alg2,alg3, msk, samples){
   samplesID <- samples$sr_band2_1
   test1 <- poly1[poly1$sr_band2_1%in%samplesID,] 
   test2 <- poly2[poly2$sr_band2_1%in%samplesID,]
@@ -94,28 +94,57 @@ tablejgamma<- (x=1:nrow(samples))%>%map(function(x) diffTablej(con_tables[[x]][[
 tablejCCchsq<- (x=1:nrow(samples))%>%map(function(x) diffTablej(con_tables[[x]][[5]], digits = 2, analysis = 'error'))#Caclculate Overall Differences (the inverse of the agreement) 
 
 # calculate Overall Differences
-overalldiff1 <-(x=1:nrow(samples))%>%map(function(x) overallDiff(con_tables[[x]][[1]]))
-overalldiff2 <-(x=1:nrow(samples))%>%map(function(x) overallDiff(con_tables[[x]][[2]]))
-overalldiff_CC <-(x=1:nrow(samples))%>%map(function(x) overallDiff(con_tables[[x]][[3]]))
-overalldiff_gamma <-(x=1:nrow(samples))%>%map(function(x) overallDiff(con_tables[[x]][[4]]))
-overalldiff_CCchsq <-(x=1:nrow(samples))%>%map(function(x) overallDiff(con_tables[[x]][[5]]))
-overalldiff1_2 <-(x=1:nrow(samples))%>%map(function(x) overallDiff(con_tables[[x]][[6]]))
+User1 <-(x=1:nrow(samples))%>%map(function(x) overallDiff(con_tables[[x]][[1]]))
+User2 <-(x=1:nrow(samples))%>%map(function(x) overallDiff(con_tables[[x]][[2]]))
+CC <-(x=1:nrow(samples))%>%map(function(x) overallDiff(con_tables[[x]][[3]]))
+gamma <-(x=1:nrow(samples))%>%map(function(x) overallDiff(con_tables[[x]][[4]]))
+CCchsq <-(x=1:nrow(samples))%>%map(function(x) overallDiff(con_tables[[x]][[5]]))
+diff1_2 <-(x=1:nrow(samples))%>%map(function(x) overallDiff(con_tables[[x]][[6]]))
 
+#build a nice tibble
 
-#Assign the IDs from Samples
-names(overalldiff1) <- samplesID
-names(overalldiff2) <- samplesID
-names(overalldiff_CC) <- samplesID
-names(overalldiff_gamma) <- samplesID
-names(overalldiff_CCchsq) <- samplesID
-names(overalldiff1_2) <- samplesID
-
-
+User1 <- as.data.frame(User1)
+User1 <- t(User1)
+User2 <- as.data.frame(User2)
+User2 <- t(User2)
+CC <-as.data.frame(CC)
+CC <- t(CC)
+gamma <-as.data.frame(gamma)
+gamma <- t(gamma)
+CCchsq <-as.data.frame(CCchsq)
+CCchsq <- t(CCchsq)
+diff1_2 <-as.data.frame(diff1_2)
+diff1_2 <- t(diff1_2)
 #bind the data together and convert into a tibble
-binded <- cbind(overalldiff1,overalldiff2,overalldiff_CC,overalldiff_gamma,overalldiff_CCchsq,overalldiff1_2)
+binded <- cbind(samplesID,User1,User2,CC,gamma,CCchsq,diff1_2)
 binded <- as.data.frame(binded)
 binded <- as_tibble(binded)
 
-ggplot(data=binded,mapping = )
-#Set the column names
-names(binded) <- c('User1', 'User2', 'CC','Gamma', 'CCChsq', 'User1/2')
+binded[,'samplesID'] <- factor(binded[,'samplesID'])
+names(binded) <- c('samplesID','User1', 'User2', 'CC','Gamma', 'CCChsq', 'twouser')
+binded$samplesID <- as.factor(binded$samplesID)
+
+summary <- binded
+save(summary,file= "results.RData")
+dir()
+ggplot(binded, aes(x=User1, y=User2))+
+  geom_point(shape=1)
+binded2 <- pivot_longer(binded, cols=User1:User2, names_to='user')
+binded3 <- pivot_longer(binded2, cols=CC:CCchsq, names_to='Algorithm')
+binded3 <- binded2%+% subset(binded2, source %in% c('User1', 'User2','gamma')) 
+  
+  ggplot(binded2, aes(x=value,y=CC, color=user))+
+  geom_smooth(method = "lm", se=FALSE, color="gray", formula = y ~ x) +
+  geom_point(shape=1)+
+  geom_abline(slope=1, intercept=0, color='red')+
+    labs(title = "Method = CC")
+  ggplot(binded2, aes(x=value,y=Gamma, color=user))+
+    geom_smooth(method = "lm", se=FALSE, color="gray", formula = y ~ x) +
+    geom_point(shape=1)+
+    geom_abline(slope=1, intercept=0, color='red')+
+    labs(title = "Method = Gamma")
+  ggplot(binded2, aes(x=value,y=CCChsq, color=user))+
+    geom_smooth(method = "lm", se=FALSE, color="gray", formula = y ~ x) +
+    geom_point(shape=1)+
+    geom_abline(slope=1, intercept=0, color='red')+
+    labs(title = "Method = CCChsq")
