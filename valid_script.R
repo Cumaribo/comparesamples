@@ -1,24 +1,16 @@
 #Sample Evaluation
 #Jerónimo Rodriguez, August 2020  
 
-# This code is takes three polygonspatial dataframes, samples, poly1 and Poly 2
-# it selects the polygons of poly1 and poly2 inside each of the sampling windows,
-# rasterizes them as "change, no-change" binary masks, compares them and calculates the 
-# contingency matrices for each window. It offers the option to plot the agreement maps and
-# export them as Geotiffs
-# the script returns a list with all the contingency tables
-
-#It requires the package "greenbrown" available here:
-http://greenbrown.r-forge.r-project.org
+# This code is used to compare the level of agreement between different change/no-change classifications for a set of polygons inside a raster extent.
+# It works both with raster as well as with vector data (by rasterizing it) and extracts square contingency tables for each pair. 
+# It generates a tibble with the different conparisons and plots with the agreement. 
+################## It is still a work in progress#########################
 
 library(rgdal)
 library(sf)
 library(rgeos)
 library(raster)
-library(greenbrown)
 library(tidyverse)
-library(data.table)
-library(lwgeom)
 library(aRn)
 library(diffeR)
 
