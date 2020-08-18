@@ -14,16 +14,16 @@ library(tidyverse)
 library(aRn)
 library(diffeR)
 
-setwd("~/Documents/victor_valid/Orinoquia")
+setwd("~/yourfolder")
 
 # load study windows
 dir()
 rm(list=ls())
-samples <- st_read("~/Documents/victor_valid/Orinoquia/samples.shp")
+samples <- st_read("~/path/to/your/folder/samples.shp")
 plot(samples)
 # Load Polygons. (using sf package)
-poly1 <- st_read('~/Documents/victor_valid/Orinoquia/poly_Ori_JRE_j.shp')
-poly2 <- st_read('~/Documents/victor_valid/Orinoquia/poly_Ori_MVS_j.shp')
+poly1 <- st_read('~/path/to/your/folder/user1.shp')
+poly2 <- st_read('~/path/to/your/folder/user2.shp')
 
 
 # load template raster (for rasterization)
@@ -37,9 +37,9 @@ plot(msk)
 #plot(window1)
 samplesID <- samples$sr_band2_1
 
-CCACHsq <- raster("LC08_L1TP_005057_20140128_20170426_removeChgMsk12_CCAChsq.tif")
-Gamma <- raster("LC08_L1TP_005057_20140128_20170426_removeChgMsk14_Gamma.tif")
-CC <- raster("LC08_L1TP_005057_20140128_20170426_removeChgMsk8_CCA.tif")
+CCACHsq <- raster("mask_CCAChsq.tif")
+Gamma <- raster("mask_Gamma.tif")
+CC <- raster("mask_CCA.tif")
 
 ###############################################################
 
