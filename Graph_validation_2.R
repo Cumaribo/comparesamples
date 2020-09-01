@@ -29,135 +29,177 @@ list_matrix1 <- list_matrix[c(1,6,7,8,15,17,18,19)]
 #load data  
 conf_mat <- (x=1:length(list_matrix1))%>%map(function(x) fdc(list_matrix1[x]))
 #############3pendiente
-labels <- c('t_100','t_100','t_99','t_99', 't_98', 't_98','t_97','t_97', 't_96', 't_96',
+labels2 <- c('t_100','t_100','t_99','t_99', 't_98', 't_98','t_97','t_97', 't_96', 't_96',
             't_95','t_95', 't_90','t_90','t_80', 't_80', 't_70','t_70', 't_60', 't_60')
-labels <- c('t_100','t_99', 't_98','t_97', 't_96','t_95', 't_90','t_80', 't_70','t_70', 't_60')
+labels2 <- c('t_100','t_99', 't_98','t_97', 't_96','t_95', 't_90','t_80', 't_70','t_70', 't_60')
 #labels <- t(labels)
 #################################
 labels <- (x=1:length(list_matrix1))%>%map(function(x) (conf_mat[x][[1]][[1]]))
 #labels <- as.data.frame(labels)
 #labels <- t(labels)
-
+labels[1]
 mat1 <- conf_mat[1]
-
-mat1[[1]][[2]][[2]]
+mat1[[1]][[2]][[9]]
 data_prep <- function(mat1){
 # extract Producers Accuracy and convert into a nice row for each place 
 PA <- as.data.frame((mat1[[1]][[2]][[l]]))
 PA <- subset(PA, select = c(1,2))
 PA <-t(PA)
 PA <- subset(PA,select=4)
-colnames(PA) <- 'PA'
+PA <- cbind(PA, labels[[l]])
+colnames(PA) <- c('PA', 'municipality')
 #return(PA)}
 UAO <- mat1[[1]][[2]][[l]]
 UAO <- subset(UAO, select=4)
 UA <- UAO[-c(3,4),]
 UA <- as.data.frame(UA)
-colnames(UA) <- 'UA'
+colnames(UA) <- c('UA')
 OA <- UAO[-c(1,2,3),]
 OA <- as.data.frame(OA)
-colnames(OA) <- 'OA'
+OA <- cbind(OA, labels[l])
+colnames(OA) <- c('OA', 'municipality')
 return(list(PA, UA, OA))}
 
 l=1
-test2_mapt <- (x=1:length(list_matrix1))%>%map(function(x) data_prep(conf_mat[x]))
+test2_mapt1 <- (x=1:length(list_matrix1))%>%map(function(x) data_prep(conf_mat[x]))
 names(test2_mapt) <- labels
 l=2
-test2_mapt1 <- (x=1:length(list_matrix1))%>%map(function(x) data_prep(conf_mat[x]))
-names(test2_mapt1) <- labels
+test2_mapt2 <- (x=1:length(list_matrix1))%>%map(function(x) data_prep(conf_mat[x]))
+names(test2_mapt2) <- labels
+l=3
+test2_mapt3 <- (x=1:length(list_matrix1))%>%map(function(x) data_prep(conf_mat[x]))
+names(test2_mapt3) <- labels
+l=4
+test2_mapt4 <- (x=1:length(list_matrix1))%>%map(function(x) data_prep(conf_mat[x]))
+names(test2_mapt4) <- labels
+l=5
+test2_mapt5 <- (x=1:length(list_matrix1))%>%map(function(x) data_prep(conf_mat[x]))
+names(test2_mapt5) <- labels
+l=6
+test2_mapt6 <- (x=1:length(list_matrix1))%>%map(function(x) data_prep(conf_mat[x]))
+names(test2_mapt6) <- labels
+l=7
+test2_mapt7 <- (x=1:length(list_matrix1))%>%map(function(x) data_prep(conf_mat[x]))
+names(test2_mapt7) <- labels
+l=8
+test2_mapt8 <- (x=1:length(list_matrix1))%>%map(function(x) data_prep(conf_mat[x]))
+names(test2_mapt8) <- labels
 
 
 
-test1 <- rbind(test2_mapt[[1]][[1]],test2_mapt1[[1]][[1]])
+forest <- c('no-forest', 'forest')
 
-UA <- as_tibble(UA)
-UA <- UA %>% pivot_longer(c('no-Forest', 'forest'), names_to = 'Turbo', values_to = 'valores')
-#UA <- t(UA)
-UA <- as.data.frame(UA)
-UA[1]=NULL
-rownames(UA) <- rownames(PA)
-colnames(UA) <- 'UserAccuracy'
-UA <- as.data.frame(UA)
-OA <- as.data.frame((the_matrix[][4,]))
-OA <- subset(OA, select = c(4,8,12,16,20,24,28,32))
-OA <-t(OA) 
-OA <- as.data.frame(OA)
-colnames(OA) <- 'OverallAccuracy'
-return(list(PA, UA, OA))}
-test1 <- data_prep(the_matrix)
+# tablebuilder <- function(test2_mapt1,test2_mapt2,test2_mapt3,test2_mapt4,test2_mapt5,test2_mapt6,
+#                          test2_mapt7,test2_mapt8){
+j=1
+PA_all <- rbind(test2_mapt1[[j]][[1]],test2_mapt2[[j]][[1]],test2_mapt3[[j]][[1]],test2_mapt4[[j]][[1]],
+               test2_mapt5[[j]][[1]],test2_mapt6[[j]][[1]],test2_mapt7[[j]][[1]],test2_mapt8[[j]][[1]])
+PA_all1 <- cbind(PA_all, labels2[[j]], forest)
+UA_all1 <- rbind(test2_mapt1[[j]][[2]],test2_mapt2[[j]][[2]],test2_mapt2[[j]][[2]],test2_mapt4[[j]][[2]],
+                test2_mapt5[[j]][[2]],test2_mapt6[[j]][[2]],test2_mapt7[[j]][[2]],test2_mapt8[[j]][[2]])
+OA_all1<- rbind(test2_mapt1[[j]][[3]],test2_mapt2[[j]][[3]],test2_mapt2[[j]][[3]],test2_mapt4[[j]][[3]],
+               test2_mapt5[[j]][[3]],test2_mapt6[[j]][[3]],test2_mapt7[[j]][[3]],test2_mapt8[[j]][[3]])
+OA_all1 <- cbind(OA_all, labels2[[j]], forest)
+# return(list(PA_all, UA_all, OA_all))}
+j=2
+PA_all <- rbind(test2_mapt1[[j]][[1]],test2_mapt2[[j]][[1]],test2_mapt3[[j]][[1]],test2_mapt4[[j]][[1]],
+                test2_mapt5[[j]][[1]],test2_mapt6[[j]][[1]],test2_mapt7[[j]][[1]],test2_mapt8[[j]][[1]])
+PA_all2 <- cbind(PA_all, labels2[[j]], forest)
+UA_all2 <- rbind(test2_mapt1[[j]][[2]],test2_mapt2[[j]][[2]],test2_mapt2[[j]][[2]],test2_mapt4[[j]][[2]],
+                 test2_mapt5[[j]][[2]],test2_mapt6[[j]][[2]],test2_mapt7[[j]][[2]],test2_mapt8[[j]][[2]])
+OA_all<- rbind(test2_mapt1[[j]][[3]],test2_mapt2[[j]][[3]],test2_mapt2[[j]][[3]],test2_mapt4[[j]][[3]],
+                test2_mapt5[[j]][[3]],test2_mapt6[[j]][[3]],test2_mapt7[[j]][[3]],test2_mapt8[[j]][[3]])
+OA_all2 <- cbind(OA_all, labels2[[j]], forest)
+j=3
+PA_all <- rbind(test2_mapt1[[j]][[1]],test2_mapt2[[j]][[1]],test2_mapt3[[j]][[1]],test2_mapt4[[j]][[1]],
+                test2_mapt5[[j]][[1]],test2_mapt6[[j]][[1]],test2_mapt7[[j]][[1]],test2_mapt8[[j]][[1]])
+PA_all3 <- cbind(PA_all, labels2[[j]], forest)
+UA_all3 <- rbind(test2_mapt1[[j]][[2]],test2_mapt2[[j]][[2]],test2_mapt2[[j]][[2]],test2_mapt4[[j]][[2]],
+                 test2_mapt5[[j]][[2]],test2_mapt6[[j]][[2]],test2_mapt7[[j]][[2]],test2_mapt8[[j]][[2]])
+OA_all3<- rbind(test2_mapt1[[j]][[3]],test2_mapt2[[j]][[3]],test2_mapt2[[j]][[3]],test2_mapt4[[j]][[3]],
+                test2_mapt5[[j]][[3]],test2_mapt6[[j]][[3]],test2_mapt7[[j]][[3]],test2_mapt8[[j]][[3]])
+OA_all3 <- cbind(OA_all, labels2[[j]], forest)
+j=4
+PA_all <- rbind(test2_mapt1[[j]][[1]],test2_mapt2[[j]][[1]],test2_mapt3[[j]][[1]],test2_mapt4[[j]][[1]],
+                test2_mapt5[[j]][[1]],test2_mapt6[[j]][[1]],test2_mapt7[[j]][[1]],test2_mapt8[[j]][[1]])
+PA_all4 <- cbind(PA_all, labels2[[j]], forest)
+UA_all4 <- rbind(test2_mapt1[[j]][[2]],test2_mapt2[[j]][[2]],test2_mapt2[[j]][[2]],test2_mapt4[[j]][[2]],
+                 test2_mapt5[[j]][[2]],test2_mapt6[[j]][[2]],test2_mapt7[[j]][[2]],test2_mapt8[[j]][[2]])
+OA_all4<- rbind(test2_mapt1[[j]][[3]],test2_mapt2[[j]][[3]],test2_mapt2[[j]][[3]],test2_mapt4[[j]][[3]],
+                test2_mapt5[[j]][[3]],test2_mapt6[[j]][[3]],test2_mapt7[[j]][[3]],test2_mapt8[[j]][[3]])
+OA_all4 <- cbind(OA_all, labels2[[j]], forest)
+j=5
+PA_all <- rbind(test2_mapt1[[j]][[1]],test2_mapt2[[j]][[1]],test2_mapt3[[j]][[1]],test2_mapt4[[j]][[1]],
+                test2_mapt5[[j]][[1]],test2_mapt6[[j]][[1]],test2_mapt7[[j]][[1]],test2_mapt8[[j]][[1]])
+PA_all5 <- cbind(PA_all, labels2[[j]], forest)
+UA_all5 <- rbind(test2_mapt1[[j]][[2]],test2_mapt2[[j]][[2]],test2_mapt2[[j]][[2]],test2_mapt4[[j]][[2]],
+                 test2_mapt5[[j]][[2]],test2_mapt6[[j]][[2]],test2_mapt7[[j]][[2]],test2_mapt8[[j]][[2]])
+OA_all5<- rbind(test2_mapt1[[j]][[3]],test2_mapt2[[j]][[3]],test2_mapt2[[j]][[3]],test2_mapt4[[j]][[3]],
+                test2_mapt5[[j]][[3]],test2_mapt6[[j]][[3]],test2_mapt7[[j]][[3]],test2_mapt8[[j]][[3]])
+OA_all5 <- cbind(OA_all, labels2[[j]], forest)
+j=6
+PA_all <- rbind(test2_mapt1[[j]][[1]],test2_mapt2[[j]][[1]],test2_mapt3[[j]][[1]],test2_mapt4[[j]][[1]],
+                test2_mapt5[[j]][[1]],test2_mapt6[[j]][[1]],test2_mapt7[[j]][[1]],test2_mapt8[[j]][[1]])
+PA_all6 <- cbind(PA_all, labels2[[j]], forest)
+UA_all6 <- rbind(test2_mapt1[[j]][[2]],test2_mapt2[[j]][[2]],test2_mapt2[[j]][[2]],test2_mapt4[[j]][[2]],
+                 test2_mapt5[[j]][[2]],test2_mapt6[[j]][[2]],test2_mapt7[[j]][[2]],test2_mapt8[[j]][[2]])
+OA_all6<- rbind(test2_mapt1[[j]][[3]],test2_mapt2[[j]][[3]],test2_mapt2[[j]][[3]],test2_mapt4[[j]][[3]],
+                test2_mapt5[[j]][[3]],test2_mapt6[[j]][[3]],test2_mapt7[[j]][[3]],test2_mapt8[[j]][[3]])
+OA_all6 <- cbind(OA_all, labels2[[j]], forest)
+j=7
+PA_all <- rbind(test2_mapt1[[j]][[1]],test2_mapt2[[j]][[1]],test2_mapt3[[j]][[1]],test2_mapt4[[j]][[1]],
+                test2_mapt5[[j]][[1]],test2_mapt6[[j]][[1]],test2_mapt7[[j]][[1]],test2_mapt8[[j]][[1]])
+PA_all7 <- cbind(PA_all, labels2[[j]], forest)
+UA_all7 <- rbind(test2_mapt1[[j]][[2]],test2_mapt2[[j]][[2]],test2_mapt2[[j]][[2]],test2_mapt4[[j]][[2]],
+                 test2_mapt5[[j]][[2]],test2_mapt6[[j]][[2]],test2_mapt7[[j]][[2]],test2_mapt8[[j]][[2]])
+OA_all7<- rbind(test2_mapt1[[j]][[3]],test2_mapt2[[j]][[3]],test2_mapt2[[j]][[3]],test2_mapt4[[j]][[3]],
+                test2_mapt5[[j]][[3]],test2_mapt6[[j]][[3]],test2_mapt7[[j]][[3]],test2_mapt8[[j]][[3]])
+OA_all7 <- cbind(OA_all, labels2[[j]], forest)
+j=8
+PA_all <- rbind(test2_mapt1[[j]][[1]],test2_mapt2[[j]][[1]],test2_mapt3[[j]][[1]],test2_mapt4[[j]][[1]],
+                test2_mapt5[[j]][[1]],test2_mapt6[[j]][[1]],test2_mapt7[[j]][[1]],test2_mapt8[[j]][[1]])
+PA_all8 <- cbind(PA_all, labels2[[j]], forest)
+UA_all8 <- rbind(test2_mapt1[[j]][[2]],test2_mapt2[[j]][[2]],test2_mapt2[[j]][[2]],test2_mapt4[[j]][[2]],
+                 test2_mapt5[[j]][[2]],test2_mapt6[[j]][[2]],test2_mapt7[[j]][[2]],test2_mapt8[[j]][[2]])
+OA_all8<- rbind(test2_mapt1[[j]][[3]],test2_mapt2[[j]][[3]],test2_mapt2[[j]][[3]],test2_mapt4[[j]][[3]],
+                test2_mapt5[[j]][[3]],test2_mapt6[[j]][[3]],test2_mapt7[[j]][[3]],test2_mapt8[[j]][[3]])
+OA_all8 <- cbind(OA_all, labels2[[j]], forest)
+# j=9
+# PA_all <- rbind(test2_mapt1[[j]][[1]],test2_mapt2[[j]][[1]],test2_mapt3[[j]][[1]],test2_mapt4[[j]][[1]],
+#                 test2_mapt5[[j]][[1]],test2_mapt6[[j]][[1]],test2_mapt7[[j]][[1]],test2_mapt8[[j]][[1]])
+# PA_all9 <- cbind(PA_all, labels2[[j]], forest)
+# UA_all9 <- rbind(test2_mapt1[[j]][[2]],test2_mapt2[[j]][[2]],test2_mapt2[[j]][[2]],test2_mapt4[[j]][[2]],
+#                  test2_mapt5[[j]][[2]],test2_mapt6[[j]][[2]],test2_mapt7[[j]][[2]],test2_mapt8[[j]][[2]])
+# OA_all9<- rbind(test2_mapt1[[j]][[3]],test2_mapt2[[j]][[3]],test2_mapt2[[j]][[3]],test2_mapt4[[j]][[3]],
+#                 test2_mapt5[[j]][[3]],test2_mapt6[[j]][[3]],test2_mapt7[[j]][[3]],test2_mapt8[[j]][[3]])
+# OA_all9 <- cbind(OA_all, labels2[[j]], forest)
+# j=10
+# PA_all <- rbind(test2_mapt1[[j]][[1]],test2_mapt2[[j]][[1]],test2_mapt3[[j]][[1]],test2_mapt4[[j]][[1]],
+#                 test2_mapt5[[j]][[1]],test2_mapt6[[j]][[1]],test2_mapt7[[j]][[1]],test2_mapt8[[j]][[1]])
+# PA_all10 <- cbind(PA_all, labels2[[j]], forest)
+# UA_all10 <- rbind(test2_mapt1[[j]][[2]],test2_mapt2[[j]][[2]],test2_mapt2[[j]][[2]],test2_mapt4[[j]][[2]],
+#                  test2_mapt5[[j]][[2]],test2_mapt6[[j]][[2]],test2_mapt7[[j]][[2]],test2_mapt8[[j]][[2]])
+# OA_all10<- rbind(test2_mapt1[[j]][[3]],test2_mapt2[[j]][[3]],test2_mapt2[[j]][[3]],test2_mapt4[[j]][[3]],
+#                 test2_mapt5[[j]][[3]],test2_mapt6[[j]][[3]],test2_mapt7[[j]][[3]],test2_mapt8[[j]][[3]])
+# OA_all10 <- cbind(OA_all, labels2[[j]], forest)
+#PA_all <- as.data.frame(PA_all)
+PAUA1 <- cbind(PA_all1,UA_all1)
+PAUA2 <- cbind(PA_all2,UA_all2)
+PAUA3 <- cbind(PA_all3,UA_all3)
+PAUA4 <- cbind(PA_all4,UA_all4)
+PAUA5 <- cbind(PA_all5,UA_all5)
+PAUA6 <- cbind(PA_all6,UA_all6)
+PAUA7 <- cbind(PA_all7,UA_all7)
+PAUA8 <- cbind(PA_all8,UA_all8)
 
-accuracies <- (x=1:length(list_matrix1))%>%map(function(x) data_prep(the_matrix[x]))
+PAUA_all <- rbind(PAUA1,PAUA2,PAUA3,PAUA4,PAUA5,PAUA6,PAUA7,PAUA8)
+OA_all <- rbind(OA_all1,OA_all2,OA_all3, OA_all4,OA_all5,OA_all6,OA_all7,OA_all8)
 
+PAUA <- as_tibble(PAUA_all)
+PAUA$PA <- as.numeric(as.character(PAUA$PA))
+PAUA_all <- pivot_longer(PAUA, cols=c(PA,UA), names_to='Type', values_to='Accuracy')
+names(PAUA_all)<- c("municipality",'Threshold', 'forest','Type','Accuracy')
 
-# UA1 <- UA
-# PA1 <- PA
-# OA1 <- OA
-# 
-# UA2 <- UA
-# PA2 <- PA
-# OA2 <- OA
-# 
-# UA3 <- UA
-# PA3 <- PA
-# OA3 <- OA
-
-# UA4 <- UA
-# PA4 <- PA
-# OA4 <- OA
-
-# UA5 <- UA
-# PA5 <- PA
-# OA5 <- OA
-
-UA6 <- UA
-PA6 <- PA
-OA6 <- OA
-# UA7 <- UA
-# PA7 <- PA
-
-# UA8 <- UA
-# PA8 <- PA
-
-
-UA1t <- t(UA1)
-UA2t <- t(UA2)
-UA3t <- t(UA3)
-UA4t <- t(UA4)
-UA5t <- t(UA5)
-UA6t <- t(UA6)
-
-PA1t <- t(PA1)
-PA2t <- t(PA2)
-PA3t <- t(PA3)
-PA4t <- t(PA4)
-PA5t <- t(PA5)
-PA6t <- t(PA6)
-
-UA_all <- rbind(UA1t, UA2t, UA3t, UA4t, UA5t, UA6t)#, UA7, UA8)
-PA_all <- rbind(PA1t, PA2t, PA3t, PA4t, PA5t, PA6t)#, PA7, PA8)
-OA_all <- rbind(OA1, OA2, OA3, OA4, OA5, OA6)#, OA7, OA8)
-
-UA_allt <- t(UA_all)
-UA_all <- cbind(UA_all, row.names(UA_all))
-PA_all <- cbind(PA_all, row.names(PA_all))
-OA_all <- cbind(OA_all, row.names(OA_all))
-
-UA_allt <- UA_allt%>%pivot_longer((names_col), names_to= 'canopy_t', values_to='UA')
-PA_all <- PA_all%>%pivot_longer((names_col), names_to= 'canopy_t', values_to='PA')
-OA_all <- OA_all%>%pivot_longer((names_col), names_to= 'canopy_t', values_to='OA')
-
-forest_vector
-UA_all <- cbind(UA_all, forest_vector)
-
-
-UA_all <- cbind(UA_all, PA_all[3,])
-#create label vector for OA
-labels <- c('t_100','t_99','t_98','t_97','t_96','t_95', 't_90', 't_80','t_70', 't_60')
-labels <- as.data.frame(labels)
-labels <- t(labels)
-labels <- cbind(labels,labels,labels,labels,labels,labels,labels,labels)
-labels <- t(labels)
-labels <- as.data.frame(labels)
 OA_all <- cbind(OA_all, labels)
 
 OA_all$canopy_t <- NULL 
