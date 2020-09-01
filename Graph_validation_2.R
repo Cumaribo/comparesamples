@@ -11,93 +11,83 @@ setwd("~/Documents/Bosques_Victor/cumaribo")
 library(tidyverse)
 #load list with the matrices
 list_matrix = list.files(pattern ="Conf_mat")
-
+load(list_matrix[[1]])
+#select the matrices i am going to use
 
 list_matrix1 <- list_matrix[c(1,6,7,8,15,17,18,19)]
 
+######here starts the function 
 
-# load empty lists (containers)
-
-# create functions to load the data
-fdc <- function(files,i){
-  fld1 <- substr(files[i], 1, 6)
+  fdc <- function(files){
+  fld1 <- substr(files, 1, 6)
   path1 <- paste(fld1)
-  return(path1)}  
-
-fdc2 <- function(files,i){
-  load(files[i])
+  load(files)
   matrix <- confusion_matrices
-  return(matrix)}
-
+  return(list(path1, matrix))}
+  
+  test1 <- fdc(list_matrix1[[1]])
+#load data  
+conf_mat <- (x=1:length(list_matrix1))%>%map(function(x) fdc(list_matrix1[x]))
+#############3pendiente
 labels <- c('t_100','t_100','t_99','t_99', 't_98', 't_98','t_97','t_97', 't_96', 't_96',
-            't_95','t_95', 't_90','t_90','t_80', 't_80', 't_70','t_70', 't_60', 't_60') 
+            't_95','t_95', 't_90','t_90','t_80', 't_80', 't_70','t_70', 't_60', 't_60')
+labels <- c('t_100','t_99', 't_98','t_97', 't_96','t_95', 't_90','t_80', 't_70','t_70', 't_60')
+#labels <- t(labels)
+#################################
+labels <- (x=1:length(list_matrix1))%>%map(function(x) (conf_mat[x][[1]][[1]]))
+#labels <- as.data.frame(labels)
+#labels <- t(labels)
 
-labels <- t(labels)
-labels <- as.data.frame(labels)
-labels <- t(labels)
-l=1
-#run functions
-list_c <- list()
-list_names <- list()
-for(i in 1:length(list_matrix)){
-  list_names[[i]] <- fdc(list_matrix,i)
-  list_c[[i]] <- fdc2(list_matrix,i)
-}
+mat1 <- conf_mat[1]
 
-
-# get the name
-names <- unlist(list_names)
-
-
-# convert the list into a dataframe
-the_matrix <- do.call(cbind.data.frame, list_c)
-
+mat1[[1]][[2]][[2]]
+data_prep <- function(mat1){
 # extract Producers Accuracy and convert into a nice row for each place 
-
-PA <- as.data.frame((the_matrix[][1,]))
-PA <- subset(PA, select = c(1,2,5,6,9,10,13,14,17,18,21,22,25,26,29,30))#,33,34,37,38))
+PA <- as.data.frame((mat1[[1]][[2]][[l]]))
+PA <- subset(PA, select = c(1,2))
 PA <-t(PA)
-colnames(PA) <- names
-# PA <- t(PA)
-# PA <- as.data.frame(PA)
-# #PA <- t(PA)
-# names_col <- colnames(PA)
-# #PA <- as.data.frame(PA)
+PA <- subset(PA,select=4)
+colnames(PA) <- 'PA'
+#return(PA)}
+UAO <- mat1[[1]][[2]][[l]]
+UAO <- subset(UAO, select=4)
+UA <- UAO[-c(3,4),]
+UA <- as.data.frame(UA)
+colnames(UA) <- 'UA'
+OA <- UAO[-c(1,2,3),]
+OA <- as.data.frame(OA)
+colnames(OA) <- 'OA'
+return(list(PA, UA, OA))}
 
-# extract Users Accuracy and convert it into a nice row
-UA <- subset(the_matrix, select=c(4,8,12,16,20,24,28,32))#,36,40))
-UA <- t(UA)
-UA <- subset(UA, select=c(1,2))
+l=1
+test2_mapt <- (x=1:length(list_matrix1))%>%map(function(x) data_prep(conf_mat[x]))
+names(test2_mapt) <- labels
+l=2
+test2_mapt1 <- (x=1:length(list_matrix1))%>%map(function(x) data_prep(conf_mat[x]))
+names(test2_mapt1) <- labels
+
+
+
+test1 <- rbind(test2_mapt[[1]][[1]],test2_mapt1[[1]][[1]])
+
 UA <- as_tibble(UA)
 UA <- UA %>% pivot_longer(c('no-Forest', 'forest'), names_to = 'Turbo', values_to = 'valores')
 #UA <- t(UA)
 UA <- as.data.frame(UA)
-
-
 UA[1]=NULL
-
-# names(UA) <- names_col
-# rownames(UA) <- names
-# UA <- t(UA)
 rownames(UA) <- rownames(PA)
-colnames(UA) <- colnames(PA)
+colnames(UA) <- 'UserAccuracy'
 UA <- as.data.frame(UA)
-PA
-#UA <- as_tibble(UA)
-
-
-# extract Overall Accuracy 
 OA <- as.data.frame((the_matrix[][4,]))
-OA <- subset(OA, select = c(4,8,12,16,20,24,28))#,32,36,40))
+OA <- subset(OA, select = c(4,8,12,16,20,24,28,32))
 OA <-t(OA) 
-colnames(OA) <- names
-OA <- t(OA)
 OA <- as.data.frame(OA)
-#PA <- t(PA)
-names_col <- colnames(OA)
-#PA <- as.data.frame(PA)
+colnames(OA) <- 'OverallAccuracy'
+return(list(PA, UA, OA))}
+test1 <- data_prep(the_matrix)
 
-# save one for each case
+accuracies <- (x=1:length(list_matrix1))%>%map(function(x) data_prep(the_matrix[x]))
+
 
 # UA1 <- UA
 # PA1 <- PA
@@ -237,6 +227,7 @@ Accu_long <- as_tibble(Accu_long)
 
 load('Accu_long.RData')
 
+Accu_long
 labels <- rbind(labels, labels, labels, labels)
 labels <- t(labels)
 labels <- as.data.frame(labels)
