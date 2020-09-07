@@ -1,6 +1,6 @@
 #Purpose: Preprocesing Landsat to obtain tass caps with cv
-ommon valid pixels
-#Author: Victoria Sarmiento
+Common valid pixels
+#Author: Victoria Sarmiento/Jerónimo Rodríguez
 #Date used: August 2020
 #Contact: 
 #
@@ -14,19 +14,19 @@ library(maptools)
 library(fitdistrplus)
 
 # Setting temporary folder -----------------------------------------
-path=("~/Documents/victor_valid/Pucallpa")
+path=("~/path")
 setwd(path)
 dir.create('tempfiledir')
 tempdir=paste(getwd(),'tempfiledir', sep="/")
 rasterOptions(tmpdir=tempdir)
 
 #Setting Working Directory -------------------------------------------------------
-wd="/Volumes/shared/VictorShare/s3dFiles/Pucallpa"
+wd="~path/to/youyr/working/folder"
 setwd(wd) 
 dir(wd)
 
 # Defining parameters ------------------------------------
-
+#create a list with all the .gz files in your wd
 listr <- list.files(".", ".gz")
 listr <- listr[c(1,3)]
  #load images
@@ -74,8 +74,8 @@ im2 <- crop(im2,e)
 
 # create reclassification matrices (check the min value of the band(s) you're going to use)
 # and calculate a common binary mask (keeps only non-NA pixels)
-mat <- rclMatrix(-1860, oneFirst = FALSE)
-mat2 <- rclMatrix(-847, oneFirst = FALSE)
+mat <- rclMatrix(minValue(im1), oneFirst = FALSE)
+mat2 <- rclMatrix(minValue(im2), oneFirst = FALSE)
 msk <- reclassify(im1[[1]],mat)
 msk2 <- reclassify(im2[[1]],mat2)
 msk3 <- msk*msk2
@@ -98,12 +98,9 @@ ggRGB(im2tc, r=1,g=2,b=3, stretch='lin')
 #create a stack with all bands
 stacktc <- stack(im2tc, im1tc)
 
-writeRaster(stacktc,"pucallpa_tasscapall", format='GTiff')
-writeRaster(im1tc,"pu_tasscap2015", format='GTiff')
-writeRaster(im2tc,"pu_tasscap2011", format='GTiff')
-
-stacktc <- stack('pucallpa_tasscapall.tif')
-
+writeRaster(stacktc,"stacked", format='GTiff')
+writeRaster(im1tc,"date1", format='GTiff')
+writeRaster(im2tc,"date2", format='GTiff')
 
 plotRGB(stacktc, r=3,g=2,b=1, stretch='lin')
 #calculate sampling windows
@@ -112,4 +109,4 @@ stacktc <- crop(stacktc, e)
 samples <- sampleRaster(stacktc, n=1)
 
 plot(samples$polygons, add=TRUE)
-writeOGR(samples$polygons, '.', 'samples_pu_5', driver="ESRI Shapefile")
+writeOGR(samples$polygons, '.', 'samples, driver="ESRI Shapefile")
