@@ -59,8 +59,7 @@ for(i in 1:length(forests)){
 forests[[i]][is.na(forests[[i]])] <- 0}
 
 # mask to your study area
-forests <- (x=1:length(years))%>%map(function(x) mask(forests[[x]], mun))
-
+forests <- (x=1:nrow(years))%>%map(function(x) mask(forests[[x]], mun))
 
 # compare each pair of years. 
 
