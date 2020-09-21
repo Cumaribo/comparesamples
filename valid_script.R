@@ -17,7 +17,7 @@ library(rgeos)
 library(raster)
 library(tidyverse)
 library(lwgeom)
-libary(diffeR)
+library(diffeR)
 library(aRn)
 
 
