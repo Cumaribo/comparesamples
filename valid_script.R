@@ -13,22 +13,23 @@ library(raster)
 library(aRn)
 library(diffeR)
 library(tidyverse)
-setwd("~/Documents/victor_valid/Pucallpa")
+setwd("~route/to/working/folder")
 
 # load study windows
 dir()
 rm(list=ls())
-samples <- st_read("~/Documents/victor_valid/Pucallpa/samples_pu.shp")
+samples <- st_read("~route/to/samples.shp")
 plot(samples)
 # Load Polygons. (using sf package)
-poly1 <- st_read('~/Documents/victor_valid/Pucallpa/user1_4.shp')
-poly2 <- st_read('~/Documents/victor_valid/Pucallpa/user2_3.shp')
+poly1 <- st_read('~/path/to/user1.shp')
+poly2 <- st_read('~/path/to/user2.shp')
 
 plot(poly2)
 # load template raster (for rasterization)
 
-template <- raster('pucallpa_tasscapall.tif')
-mat <- rclMatrix(152,oneFirst=FALSE)
+template <- raster('rasterstudyarea.tif')
+
+mat <- rclMatrix(min(template),oneFirst=FALSE)
 msk <- reclassify(template, mat)
 
 plot(msk)
