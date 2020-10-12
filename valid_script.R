@@ -1,5 +1,5 @@
 #Sample Evaluation
-#Jerónimo Rodriguez, October 2020  
+#Jerónimo Rodriguez, August 2020  
 
 # This code is used to compare the level of agreement between different change/no-change classifications for a set of polygons inside a raster extent.
 # It works both with raster as well as with vector data (by rasterizing it) and extracts square contingency tables for each pair. 
@@ -13,33 +13,29 @@ library(raster)
 library(aRn)
 library(diffeR)
 library(tidyverse)
-setwd("~route/to/working/folder")
+setwd("/Users/sputnik/Documents/victor_valid/DF")
 
 # load study windows
 dir()
-rm(list=ls())
-samples <- st_read("~route/to/samples.shp")
-plot(samples)
+samples <- st_read("/Users/sputnik/Documents/victor_valid/DF/samples_df.shp")
+plot(samples, add=TRUE)
 # Load Polygons. (using sf package)
-poly1 <- st_read('~/path/to/user1.shp')
-poly2 <- st_read('~/path/to/user2.shp')
+poly1 <- st_read('~/Documents/victor_valid/DF/User1_mex.shp')
+poly2 <- st_read('~/Documents/victor_valid/DF/user2_DF_2.shp')
+
 
 plot(poly2)
 # load template raster (for rasterization)
 
-template <- raster('rasterstudyarea.tif')
+template <- raster('/Users/sputnik/Documents/victor_valid/DF/mask_DF.tif')
 
-mat <- rclMatrix(min(template),oneFirst=FALSE)
-msk <- reclassify(template, mat)
-
-plot(msk)
-# here, i generated a vector with the unique values of the id's of the windows
-#plot(window1)
 samplesID <- samples$sr_band2_1
 
-CCACHsq <- raster("pu_chsq_ChgMsk.tif")
-Gamma <- raster("pu_Gamma_ChgMsk.tif")
-CC <- raster("pu_CC_ChgMsk.tif")
+plot(samples$brght_1, add=TRUE)
+
+CCACHsq <- raster("/Volumes/shared/VictorShare/s3dFiles/Mexico/OutputsChsqCCA/LT05_L1TP_026046_20100205_20161016_removeChgMsk6.tif")
+Gamma <- raster("/Volumes/shared/VictorShare/s3dFiles/Mexico/OutputsGamma/LT05_L1TP_026046_20100205_20161016_removeChgMsk8.tif")
+CC <- raster("/Volumes/shared/VictorShare/s3dFiles/Mexico/OutputsGammaCCA/LT05_L1TP_026046_20100205_20161016_removeChgMsk5.tif")
 # rasters and vectors as lists. 
 # type of analysis and output that can be specified. Set results as % or · pixels
 # erxport results, create agreement tiff. Create agreement map with symb ology
@@ -56,8 +52,11 @@ square_cont <- function(poly1, poly2, alg1,alg2,alg3, msk, samples){
   test2 <- st_crop(test2, extent(window1))
   #return(test2)}
   msk <- crop(msk, extent(window1))
+  #return(msk)}
   alg1 <- crop(alg1, extent(window1))
+  #return(alg1)}
   alg2 <- crop(alg2, extent(window1))
+  #return(alg2)}
   alg3 <- crop(alg3, extent(window1))
   #return(alg3)}
   test1.r <- rasterize(test1, msk, test1$change_b)
@@ -123,13 +122,16 @@ names(binded) <- c('samplesID','User1', 'User2', 'CC','Gamma', 'CCChsq', 'Diff_u
 binded$samplesID <- as.factor(binded$samplesID)
 
 binded
-save(binded,file= "results_pucallpa_corr.RData")
+save(binded,file= "results_Mexico_2.RData")
 
 ###########################################Hasta acá llegá. De acá para 
 # abajo van las gráficas. 
-binded <- summary
-rm(binded2)
-dir()
+# binded <- summary
+# rm(binded2)
+# dir()
+
+
+
 
 binded2 <- pivot_longer(binded, cols=User1:User2, names_to='user')
 # this still does not work, but this is what i need to solve!!!
@@ -158,3 +160,4 @@ ggplot(binded2, aes(x=value,y=CCChsq, color=user))+
   geom_abline(slope=1, intercept=0, color='red')+
   labs(title = "Method = CCChsq")
 rm(summary)
+
