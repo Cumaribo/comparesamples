@@ -1,0 +1,188 @@
+This is the current workig version of the forest evaluation script. copy hewre because RStudio seems to have hung and have to restar the cpmputer
+# This code is used to download all the forest- no forest binary masks from the 
+# Global forest cover Dataset by Hansen et al  using the package ForestChange.
+#It  returns a list containiing the succesive masks for the requested period and spatial extent
+# given the Canopy cover threshold.
+#It requires the package "greenbrown" available here:
+
+# Load libraries 
+rm(list=ls())
+library(raster)
+library(rgdal)
+library(forestChange)
+library(parallel)
+library(sf)
+library(tidyverse)
+
+rm(list=ls())
+
+#Set your working folder
+setwd("/Volumes/tug76452/Ecosistemas_Colombia")
+
+# load data (biomas IAvH)  
+mun <- st_read('~/Documents/vectors_basemaps/ContornoColombia.geojson')
+mun <- mun[!st_is_empty(mun),,drop=FALSE]
+
+writeOGR(mun, ".", "contorno_col_2", driver='ESRI Shapefile')
+#make sure that yoeur vectorfile is in crs=WGS84, as this is the one of the gobal forest dataset.
+
+m
+# if necessary, use this to reproject:
+#mun <- spTransform(mun, crs='+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0')
+
+Sys.setlocale(locale="C")
+
+poly <- list(mun$BIOMA_IAvH)
+poly <- unlist(poly)
+
+mun <- as(mun, 'Spatial')
+
+perc_ <- 70:100
+perc2 <- 95:100
+perc <- as.vector(perc_)
+# split mun into list of independent polygons  
+biomat <- mun%>%split(.$BIOMA_IAvH)
+
+plot(mun)
+
+test1 <- (map(1:5, function(x) map(1:length(perc_),function(y) FCMask(biomat[[x]], year=2017, cummask=FALSE,
+                                                                      perc = y, mc.cores = detectCores()))))
+
+raster::freq(test1[[3]][[2]])
+
+plot(test1[[3]][[2]])
+forests <- mun%>%
+  split(.$BIOMA_IAvH)%>%
+  (map(1:5, function(.) map(98:99),function(y) FCMask(biomat[[.]], year=2015, cummask=FALSE,
+                                                      perc = y, mc.cores = detectCores()))))
+
+test2 <- map(perc2, function(x) FCMask(mun, year=2017, cummask=FALSE, perc = x, mc.cores = 10)) 
+
+test2 <- map(98:99, function(x) FCMask(biomat[[3]], year=2017, cummask=FALSE, perc = x, mc.cores = 10)) 
+
+test2 <- (map(1:2, function(x) FCMask(mun, year=2017, cummask=FALSE, perc = x, mc.cores = 10)))      
+
+
+
+forests <- mun%>%
+  split(.$BIOMA_IAvH)%>%
+  map(., FCMask, year=2015, cummask=FALSE, perc=70, mc.cores=detectCores())
+
+forests <- mun%>%
+  split(.$BIOMA_IAvH)%>%
+  (map(1:5, function(.) map(1:length(perc_),function(y) FCMask(biomat[[.]], year=2015, cummask=FALSE,
+                                                               perc = y, mc.cores = detectCores()))))
+
+plot(forests70.1[[1]], add=TRUE)
+summary(forests70.1[[1]])
+unique(forests70.1[[1]])
+frequency(forests70.1[[1]])
+
+
+listGP()
+raster::freq(forests70.1[[4]])
+
+#test the original function. There is something going on with the years 2016:2018 but i need this to run
+# for the moment
+forest2<- FCMask(biomat[[1]], year=2017, cummask=FALSE, perc=100:100, mc.cores = detectCores())
+plot(forest2)
+
+# What do I have?
+#   
+#   1. 399 polygons (biomas IAVH)
+#   2. 2017 Raster Bosques
+#   2. 2016 Raster Bosques
+#   4. FCMask function 
+
+y <- list(70:100)
+y <- unlist(y)
+
+FCMask
+
+
+
+
+forests70 <- (y=1:length(x))%>%map(function(y) FCMask(biomat[1], year=2015, cummask=FALSE, perc=60:100, mc.cores = detectCores()))
+
+
+forests70 <- (x=1:3)%>%map(function(x) FCMask(biomat[x], year=2015, cummask=FALSE, perc=70:100, mc.cores = detectCores())) 
+
+#It is not working for the year 2017 for some reason!
+
+forests70.1 <- (x=1:3)%>%map(function(x) FCMask(biomat[[x]], year=2015, cummask=FALSE, perc=70, mc.cores = detectCores())) 
+forests80.1 <- (x=1:3)%>%map(function(x) FCMask(biomat[[x]], year=2015, cummask=FALSE, perc=80, mc.cores = detectCores())) 
+forests90.1 <- (x=1:3)%>%map(function(x) FCMask(biomat[[x]], year=2015, cummask=FALSE, perc=90, mc.cores = detectCores())) 
+
+df <- data.frame(
+  x = 1:3,
+  y = 10:12,
+  z = letters[1:3]
+)
+
+
+
+mun%>%
+  split(.$BIOMA_IAvH)%>%
+  map(., FCMask, year=2015, cummask=FALSE, perc=70, mc.cores=detectCores())
+
+
+
+plus2 <- function(x, y, ...) x + y
+pmap_dbl(df, plus2)
+forests70.ec <- (x=1:3)%>%map(function(x) getrsp(biomat[[x]], year=2015, cummask=FALSE, perc=70, mc.cores = detectCores())) 
+
+dat <- got_chars
+map(dat, 3)
+
+listGP()
+forests <- (x=1:length(biomat))%>%map(function(x) FCMask(biomat[x], year=2015, cummask=FALSE, perc=100:100, mc.cores = detectCores()))
+
+
+plot(forests[[1]]) 
+
+forests <-  biomat %>%map(FCMask(year=2017, cummask=FALSE, perc=100:100, mc.cores=detectCores())) 
+
+forests <- (x=1:1)%>%map(function(x) FCMask(mun[x], year=2017, cummask=FALSE, perc=95:100, mc.cores = detectCores()))
+forests <- (x=1:length(poly))%>%map(function(x) FCMask(biomat[x], year=2017, cummask=FALSE, perc=100:100, mc.cores = detectCores()))
+
+forests <- (x=1:1)%>%map(function(x) FCMask(biomat[x], year=2017, cummask=FALSE, perc=100:100, mc.cores = detectCores()))
+
+#Need to:
+
+#Download all the masks for all the biomas for all the threshols for 2017!!!! 
+# will i get a dataset for all places iterating over all thresholds! and this will be evaluated with compareraster. I need a list with all the thresholds for each one of the places
+#create binary forest mask with forestChange 
+# you can plot any just to check. not required
+plot(forests[[2]])
+
+
+# convert the NAs into 0 (zero)
+for(i in 1:length(forests)){
+  forests[[i]][is.na(forests[[i]])] <- 0}
+
+# mask to your study area
+forests <- (x=1:length(years))%>%map(function(x) mask(forests[[x]], mun))
+
+
+# compare each pair of years. 
+
+compare1 <- CompareClassification(forests[[1]], forests[[2]], 
+                                  names = list('year n'=c('no-Forest','forest'),'year n+1'=c('no-Forest','forest')), samplefrac = 1)
+
+#you could try to map this function too. Else, you will have to run each step manually, changing the index for each forests Argument. 
+
+
+#of course, you can run a comparison between any given pair of years for your study period, they don´t need to be consecutive. 
+#CompareClassification produces a list with three objects.
+# 1. A raster with the changes. The pixel values range from  1 to 4; 1. stands for class 1 that remained the same, 2 and 3 changes 
+# in one way or another and 4 is class two remained the same. Yo can export it with writeraster
+# 2. A square contingency table that tells you the difference between the pair of maps numerically. it's like a confusion matrix
+# but it discloses the level of agreemwnt between both maps and how many pixles were gsined/lost for each class.
+# The kappa bwtween the two maps. It is supposed to represent the overall level of agreement between the two maps.
+# however, as it does not tell where these pixels are, or to which class they belong, some authors do not recommend using it
+# for more information, check https://www.researchgate.net/profile/Marco_Millones/publication/233196329_Death_to_Kappa_Birth_of_quantity_disagreement_and_allocation_disagreement_for_accuracy_assessment/links/0deec531e1ea538616000000.pdf
+
+plot(compare1)
+#this plots an agrerement map between each pai of maps, showing what pixels remained the same, and for the ones that changed
+# the type of change (forest to no-forest; a forest loss or no-forest to forest, a forest gain). You can export it as a .tiff or png or 
+#whatever you prefer
