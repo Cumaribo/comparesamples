@@ -1,10 +1,8 @@
-This is the current workig version of the forest evaluation script. copy hewre because RStudio seems to have hung and have to restar the cpmputer
 # This code is used to download all the forest- no forest binary masks from the 
 # Global forest cover Dataset by Hansen et al  using the package ForestChange.
-#It  returns a list containiing the succesive masks for the requested period and spatial extent
-# given the Canopy cover threshold.
+#It  returns maps for each one of the thresholds between 70 and 100%. The next step is to load this, stack cut it by pieces and then carry out the comparson betwee nthe maps. Everything trough maps.
 #It requires the package "greenbrown" available here:
-
+http://greenbrown.r-forge.r-project.org
 # Load libraries 
 rm(list=ls())
 library(raster)
@@ -13,65 +11,133 @@ library(forestChange)
 library(parallel)
 library(sf)
 library(tidyverse)
+library(purrr)
+library(furrr)
 
 rm(list=ls())
 
 #Set your working folder
-setwd("/Volumes/tug76452/Ecosistemas_Colombia")
-
+setwd("/media/mnt/Ecosistemas_Colombia")
+dir()
 # load data (biomas IAvH)  
-mun <- st_read('~/Documents/vectors_basemaps/ContornoColombia.geojson')
+mun <- st_read('/media/mnt/Ecosistemas_Colombia/ContornoColombia.geojson')
 mun <- mun[!st_is_empty(mun),,drop=FALSE]
 
-writeOGR(mun, ".", "contorno_col_2", driver='ESRI Shapefile')
-#make sure that yoeur vectorfile is in crs=WGS84, as this is the one of the gobal forest dataset.
+#make sure that your vectorfile is in crs=WGS84, as this is the one of the gobal forest dataset.
 
-m
 # if necessary, use this to reproject:
 #mun <- spTransform(mun, crs='+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0')
 
 Sys.setlocale(locale="C")
 
-poly <- list(mun$BIOMA_IAvH)
-poly <- unlist(poly)
-
+# convert map into spaila polygon dataframe.
 mun <- as(mun, 'Spatial')
 
-perc_ <- 70:100
-perc2 <- 95:100
-perc <- as.vector(perc_)
+# create vector withe the threshold you want to iterate. 
+# Warning, this process requires a lot of temp memory, so make sure to have enough storage space or split your process in smaller chuncks
+perc2 <- 78:84
+# this creates a vector of names from the vector
+perccar <- as.character(perc2) 
+
+# set a temporary working folder.
+dir.create('tempfiledir')
+tempdir=paste(getwd(),'tempfiledir', sep="/")
+rasterOptions(tmpdir=tempdir)
+
+# download each one of the maps. The allowable length of your vector depends on your available storage and the size of the study area 
+# i need to parallelize this. It is not running parallel when it comes to "Mosaicing is required"
+test2 <- map(perc2, function(x) FCMask(mun, year=2017, cummask=FALSE, perc = x, mc.cores = 8)) 
+
+#Save your rasters
+# parallelize this, to get it to write faster into memory
+map(1:length(perc2), function(x) writeRaster(test2[[x]], paste('forest_col', perccar[x], sep='_'), format='GTiff')) 
+
+
+#load the biomas
+
+mun <- st_read('/media/mnt/Ecosistemas_Colombia/biomas_wgs84.shp')
+
 # split mun into list of independent polygons  
 biomat <- mun%>%split(.$BIOMA_IAvH)
 
-plot(mun)
+#load the rasters i just created. 
+#create a list with the names of the masks
+listr <- list.files(".", "forest_col")
+#create an empty container list
+r.list <- list()
 
-test1 <- (map(1:5, function(x) map(1:length(perc_),function(y) FCMask(biomat[[x]], year=2017, cummask=FALSE,
-                                                                      perc = y, mc.cores = detectCores()))))
+# load the rasters
+for(i in 1:length(listr)){
+    r.list[[i]] <- raster(listr[i])}
+# stack the rasters to build a multi band rasterstack. 
+stack_forests <- do.call(stack, r.list)
 
-raster::freq(test1[[3]][[2]])
+#this is the next step. 
+#Get to mask over all of the 399 pieces. 
 
-plot(test1[[3]][[2]])
-forests <- mun%>%
-  split(.$BIOMA_IAvH)%>%
-  (map(1:5, function(.) map(98:99),function(y) FCMask(biomat[[.]], year=2015, cummask=FALSE,
-                                                      perc = y, mc.cores = detectCores()))))
+#Let us start small
 
-test2 <- map(perc2, function(x) FCMask(mun, year=2017, cummask=FALSE, perc = x, mc.cores = 10)) 
+test1 <- biomat[1:10]
+#test with one
 
-test2 <- map(98:99, function(x) FCMask(biomat[[3]], year=2017, cummask=FALSE, perc = x, mc.cores = 10)) 
+#prepare the cores. I am testing the furrr package to parallelize in a tidyverse map
+plan(multisession, workers=7)
 
-test2 <- (map(1:2, function(x) FCMask(mun, year=2017, cummask=FALSE, perc = x, mc.cores = 10)))      
+cropped <- future_map(1:10, function(x) crop(stack_forests, extent(test1[[x]])))
+maskedt <- future_map(1:10, function(x) mask(cropped[x], (test1[[x]])))
+
+map(1:length(maskedt), function(x) writeRaster(maskedt[[x]], paste('forests_2017', namesu[x], sep='_'), format='GTiff')) 
+
+#here i will have a set of multiband rasters for each of the biomas
+#next step ->save the data
+
+cropped <- future_map(1:length(biomat), function(x) crop(stack_forests, extent(biomat[[x]])))
+maskedt <- future_map(1:length(biomat), function(x) crop(cropped[x], extent(biomat[[x]])))
+#get the names
+names <- as.list(mun$BIOMA_IAvH)
+namesu <- unlist(names)
+namesu <- as.data.frame(namesu)
+names1 <- as.vector(namesu$namesu)
+names1[1]
+namesu[1]
+
+map(1:length(maskedt), function(x) writeRaster(maskedt[[x]], paste('forests_2017', namesu[x], sep='_'), format='GTiff')) 
 
 
+
+forests1 <- crop(stack_forests, extent(test1[[1]]))
+
+maskedt <- mask(stack_forests, test1[[1]])
+
+masked <- map(test1, function(x) mask(stack_forests, test1[[x]], mc.cores=8))
+
+map(test1, function(x) writeRaster(masked[[x]], paste('forest_col', perccar[x], sep='_'), format='GTiff'))
+
+
+test2 <- map(perc2, function(x) FCMask(mun, year=2017, cummask=FALSE, perc = x, mc.cores = 8)) 
+
+#Save your rasters
+# parallelize this, to get it to write faster into memory
+map(1:length(perc2), function(x) writeRaster(test2[[x]], paste('forest_col', perccar[x], sep='_'), format='GTiff')) 
 
 forests <- mun%>%
   split(.$BIOMA_IAvH)%>%
   map(., FCMask, year=2015, cummask=FALSE, perc=70, mc.cores=detectCores())
 
+
+#Keep this in mind, it willbe useful when performing the anaysis
+# test1 <- (map(1:5, function(x) map(1:length(perc_),function(y) FCMask(biomat[[x]], year=2017, cummask=FALSE,
+#                                                                        perc = y, mc.cores = detectCores()))))
+# forests <- mun%>%
+#   split(.$BIOMA_IAvH)%>%
+#   (map(1:5, function(.) map(98:99),function(y) FCMask(biomat[[.]], year=2015, cummask=FALSE,
+#                                                                perc = y, mc.cores = detectCores()))))
+
 forests <- mun%>%
   split(.$BIOMA_IAvH)%>%
   (map(1:5, function(.) map(1:length(perc_),function(y) FCMask(biomat[[.]], year=2015, cummask=FALSE,
                                                                perc = y, mc.cores = detectCores()))))
+
 
 plot(forests70.1[[1]], add=TRUE)
 summary(forests70.1[[1]])
@@ -98,8 +164,6 @@ y <- list(70:100)
 y <- unlist(y)
 
 FCMask
-
-
 
 
 forests70 <- (y=1:length(x))%>%map(function(y) FCMask(biomat[1], year=2015, cummask=FALSE, perc=60:100, mc.cores = detectCores()))
