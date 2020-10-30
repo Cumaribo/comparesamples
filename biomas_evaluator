@@ -72,22 +72,31 @@ for(i in 1:length(listr)){
 # stack the rasters to build a multi band rasterstack. 
 stack_forests <- do.call(stack, r.list)
 
+rm(r.list)
+
 #this is the next step. 
 #Get to mask over all of the 399 pieces. 
 
 #Let us start small
 
-test1 <- biomat[1:10]
-#test with one
-
 #prepare the cores. I am testing the furrr package to parallelize in a tidyverse map
 plan(multisession, workers=7)
 
-cropped <- future_map(1:10, function(x) crop(stack_forests, extent(test1[[x]])))
-maskedt <- future_map(1:10, function(x) mask(cropped[x], (test1[[x]])))
+#crop using the ecxtent of each bioma
+cropped <- map(1:length(biomat), function(x) crop(stack_forests, extent(biomat[[x]])))
 
-map(1:length(maskedt), function(x) writeRaster(maskedt[[x]], paste('forests_2017', namesu[x], sep='_'), format='GTiff')) 
+#this future thing is not working properly
+#cropped <- future_map(1:3, function(x) crop(stack_forests, extent(test1[[x]])))
 
+#mask the stack with each one of the biomas
+maskedt <- map(1:length(cropped), function(x) mask(cropped[[x]], (biomat[[x]])))
+
+#write the whole shit
+map(1:length(maskedt), function(x) writeRaster(maskedt[[x]], paste('forests_2017', namesu[x], sep='_'), format='GTiff', overwrite=TRUE)) 
+
+
+
+test1[[1]]
 #here i will have a set of multiband rasters for each of the biomas
 #next step ->save the data
 
@@ -95,11 +104,12 @@ cropped <- future_map(1:length(biomat), function(x) crop(stack_forests, extent(b
 maskedt <- future_map(1:length(biomat), function(x) crop(cropped[x], extent(biomat[[x]])))
 #get the names
 names <- as.list(mun$BIOMA_IAvH)
+
+names <- map(1:length(names), function(x) as.character(names[[x]]))
 namesu <- unlist(names)
-namesu <- as.data.frame(namesu)
-names1 <- as.vector(namesu$namesu)
-names1[1]
-namesu[1]
+
+
+plot(maskedt[[3]][[20]], add=TRUE)
 
 map(1:length(maskedt), function(x) writeRaster(maskedt[[x]], paste('forests_2017', namesu[x], sep='_'), format='GTiff')) 
 
