@@ -22,10 +22,14 @@ library(tidyverse)
 library(purrr)
 library(furrr)
 
+dir.create('tempfiledir')
+tempdir=paste(getwd(),'tempfiledir', sep="/")
+rasterOptions(tmpdir=tempdir)
 #Set your working folder
 setwd("/media/mnt/Ecosistemas_Colombia")
 dir()
-# load data (biomas IAvH)  
+
+# load data 
 # mun <- st_read('/media/mnt/Ecosistemas_Colombia/ContornoColombia.geojson')
 # mun <- mun[!st_is_empty(mun),,drop=FALSE]
 
@@ -36,7 +40,7 @@ dir()
 
 Sys.setlocale(locale="C")
 
-# # convert map into spaila polygon dataframe.
+# # convert map into spatial polygon dataframe.
 # mun <- as(mun, 'Spatial')
 # 
 # # create vector withe the threshold you want to iterate. 
@@ -45,9 +49,7 @@ Sys.setlocale(locale="C")
 # # this creates a vector of names from the vector
 # perccar <- as.character(perc2) 
 # # set a temporary working folder.
-dir.create('tempfiledir')
-tempdir=paste(getwd(),'tempfiledir', sep="/")
-rasterOptions(tmpdir=tempdir)
+
 # 
 # # download each one of the maps. The allowable length of your vector depends on your available storage and the size of the study area 
 # # i need to parallelize this. It is not running parallel when it comes to "Mosaicing is required"
@@ -60,15 +62,16 @@ rasterOptions(tmpdir=tempdir)
 rm(list=ls())
 #load the biomas
 
-mun <- st_read('/media/mnt/Ecosistemas_Colombia/paramos.shp')
+mun <- st_read('/media/mnt/Ecosistemas_Colombia/biomas_wgs84.shp')
 labels <- (mun$BIOMA_IAvH)
 
-
+mun <- as(mun, 'Spatial')
 # split mun into list of independent polygons  
 biomat <- mun%>%split(.$BIOMA_IAvH)
 
-biomat <- biomat[-c(1:217)]
-biomat[[218]]
+#######################################################################################################
+biomat <- biomat[-c(1:379)]
+biomat[[1]]
 #load the rasters i just created. 
 #create a list with the names of the masks
 listr <- list.files(".", "forest_col")
@@ -92,8 +95,7 @@ rm(r.list)
 names <- as.list(mun$BIOMA_IAvH)
 names <- map(1:length(names), function(x) as.character(names[[x]]))
 namesu <- unlist(names)
-namesu <- namesu[390:397]
-
+namesu <- namesu[379:386]
 dir()
 #Let us start small
 tempdir()
@@ -110,15 +112,14 @@ tmpDir()
 # rasterOptions(tmpdir=tempdir)
 
 #still dont send the stuff to process in nimbus, but keeps woking on the local machine. I decided to split it un parts for the moment
-setwd()
 
 plan(multisession, workers=7)
 
-cropped <- future_map(1:length(namesu), function(x) crop(stack_forests, extent(biomat[[x]])))
-maskedt <- map(1:length(cropped), function(x) raster::mask(cropped[[x]], biomat[[x]]))
-future_map(1:length(maskedt), function(x) writeRaster(maskedt[[x]], paste('forests_2017', namesu[x], sep='_'), format='GTiff', overwrite=TRUE)) 
+  cropped <- future_map(1:length(namesu), function(x) crop(stack_forests, extent(biomat[[x]])))
+  maskedt <- map(1:length(cropped), function(x) raster::mask(cropped[[x]], biomat[[x]]))
+  future_map(1:length(maskedt), function(x) writeRaster(maskedt[[x]], paste('forests_2017', namesu[x], sep='_'), format='GTiff', overwrite=TRUE)) 
 
-
+#########################################################################################################################
 
 #Keep this in mind, it will be useful when performing the anaysis
 #test the original function. There is something going on with the years 2016:2018 but i need this to run
@@ -143,69 +144,52 @@ listr <- list.files(".", "forests_2017")
 
 #create an empty container list
 r.list <- list()
-#load the stacks
+#load the stacks110
 for(i in 1:length(listr)){
   r.list[[i]] <- stack(listr[i])}
 
-#this just loads the first band, it is done to extract the names! Next time get rid of spaces sand tildes]
-r.list2 <- list()
-#load the stacks
-for(i in 1:length(listr)){
-  r.list2[[i]] <- raster(listr[i])}
+#this just loads the first band, it is done to extract the names! Next time get rid of spaces sand tildes] I already have the names, i fdont need them again!
+# r.list2 <- list()
+# #load the stacks
+# for(i in 1:length(listr)){
+#   r.list2[[i]] <- raster(listr[i])}
+# 
+# # #create the list with the names 
+# listnames <- list()
+# for(i in 1:length(r.list)){
+#   listnames[i] <- substr(r.list2[[i]]@file@name, 46, nchar(r.list2[[i]]@file@name))}
+# listnames <- unlist(listnames)
+# listnames <- as.factor(listnames)
+# #i dont' need this anymore, so wewill get rid of it 
+# rm(r.list2)
 
-# #create the list with the names 
-listnames <- list()
-
-for(i in 1:length(r.list)){
-  listnames[i] <- substr(r.list2[[i]]@file@name, 46, nchar(r.list2[[i]]@file@name))}
-listnames <- unlist(listnames)
-
-listnames <- as.factor(listnames)
-
-
-labels
-#i dont' need this anymore, so wewill get rid of it 
-rm(r.list2)
+listnames
 
 
-test2 <- r.list[[2]]
 
-
-plan(multisession, workers=6)
-
-
-masker <- function(test,poly){
-  test2 <- map(1:nlayers(test2), function(x) replace_na(test2[[x]],0))
-  test2 <- do.call(stack,test2)
+# set your future settings (number of cores and memory to be allocated)
+mem_future <- 1000*1024^2 #this is toset the limit to 1GB
+plan(multisession, workers=7)
+options(future.globals.maxSize= mem_future)
+# this function subsitutes the NA for zeros, masks the rasters and writes the new raster
+masker <- function(test,poly, labels){
+  test <- map(1:nlayers(test), function(x) replace_na(test[[x]],0))
+  print('na-replaced')
+  test2 <- do.call(stack,test)
+  print('stacked')
   test2 <- mask(test2, poly)
+  print('masked, writing raster')
+  writeRaster(test2, paste('masked', labels, sep='_'), format='GTiff')
   return(test2)}
 
-test1 <- masker(test=test2, poly=biomat[[2]])
 
-plot(test1[[2]])
+test2 <- future_map(1:length(names), function(x) masker(r.list[[x]], biomat[[x]], labels[x]))
 
-plot(test2[[5]])
-test3 <- test2[[1]]
-test3 <- replace_na(test3,0)
+test2 <- future_map(1:2, function(x) masker(r.list[[x]], biomat[[x]], labels[x]))
 
 
-plot(test3)
-summary(test2[[1]][[1]])
-plot(test2[[1]][[1]])
-test1 <- replace_na(test1,0)
+rm(r.list)
 
-?replace_na
-
-
-test1 <- r.list[[1]]
-r.list[[1]][is.na(r.list[[1]])] <- 0
-
-lapply
-for(i in 1:length(r.list)){
-  r.list[[i]][is.na(r.list[[i]])] <- 0}
-
-
-r.list[[1]][is.na(r.list[[1]])] <- 0
 
 
 # mask to your study area
@@ -213,6 +197,8 @@ r.list <- (x=1:length(years))%>%map(function(x) mask(forests[[x]], mun))
 
 
 # compare each pair of years. 
+
+
 
 compare1 <- CompareClassification(forests[[1]], forests[[2]], 
                                   names = list('year n'=c('no-Forest','forest'),'year n+1'=c('no-Forest','forest')), samplefrac = 1)
@@ -233,5 +219,4 @@ compare1 <- CompareClassification(forests[[1]], forests[[2]],
 plot(compare1)
 #this plots an agrerement map between each pai of maps, showing what pixels remained the same, and for the ones that changed
 # the type of change (forest to no-forest; a forest loss or no-forest to forest, a forest gain). You can export it as a .tiff or png or 
-#whatever you prefer
-biomat
+#whatever you pre
